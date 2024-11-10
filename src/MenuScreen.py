@@ -6,13 +6,13 @@ from abc import ABC
 import sys
 import pygame
 
-SCREEN_COLOR = (255, 255, 255)
+SCREEN_COLOR = (255, 244, 234)
 CAPTION = 'AI Based Board Game'
 
-BTN_COLOR = (158, 223, 156)
+BTN_COLOR = (126, 172, 181)
 BTN_FONT_SIZE = 25
 BTN_FONT_NAME = 'arialblack'
-BTN_TEXT_COLOR = (255, 255, 255)
+BTN_TEXT_COLOR = (255, 244, 234)
 BTN_WIDTH = 300
 BTN_HEIGHT = 150
 BTN_GAP = 100
@@ -21,7 +21,7 @@ HEADER_POS_Y = 75
 HEADER_FONT_SIZE = 70
 HEADER_FONT_NAME = 'arialblack'
 HEADER_TXT = 'AI Based Board Game'
-HEADER_COLOR = (0, 0, 0)
+HEADER_COLOR = (201, 104, 104)
 
 class MenuScreen(Screen, ABC):
 
@@ -60,7 +60,7 @@ class MenuScreen(Screen, ABC):
         self.screen.fill(SCREEN_COLOR)
         pygame.display.set_caption(CAPTION)
 
-        self.setup_header(HEADER_FONT_NAME, HEADER_FONT_SIZE, HEADER_TXT, HEADER_COLOR, HEADER_POS_Y)
+        self.setup_header(self.screen, HEADER_FONT_NAME, HEADER_FONT_SIZE, HEADER_TXT, HEADER_COLOR, HEADER_POS_Y)
         self.setup_btn()
 
     def update(self):
