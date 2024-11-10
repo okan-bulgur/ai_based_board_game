@@ -147,6 +147,7 @@ class GameScreen(Screen, ABC):
         b_act.unselect_obj(_selected_pos)
         _selected = False
         _selected_pos = None
+        self.reload_screen()
 
     def select_obj(self, pos):
         global _selected_pos, _selected
@@ -195,16 +196,17 @@ class GameScreen(Screen, ABC):
                     sys.exit()
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 3 and _selected:
+                    if event.button == 1:
+                        if _selected:
+                            new_pos = self.find_clicked_board_pos(event.pos)
+                            if b_act.check_pos_empty(new_pos):
+                                self.move_obj(_selected_pos, new_pos)
+
+                        else:
+                            self.select_obj(event.pos)
+
+                    elif event.button == 3 and _selected:
                         self.unselect_obj()
-
-                    if _selected:
-                        new_pos = self.find_clicked_board_pos(event.pos)
-                        if b_act.check_pos_empty(new_pos):
-                            self.move_obj(_selected_pos, new_pos)
-
-                    else:
-                        self.select_obj(event.pos)
 
                     if self.home_btn.is_clicked(event.pos):
                         sm.change_screen(sm.menuScreen)
