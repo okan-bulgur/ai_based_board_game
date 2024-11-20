@@ -1,3 +1,6 @@
+from turtledemo.clock import setup
+
+from src.BoardAction import movement_count
 from src.Screen import Screen
 from src.Button import Button
 from src import ScreenManager as sm
@@ -16,11 +19,18 @@ HEADER_FONT_SIZE = 70
 HEADER_FONT_NAME = 'arialblack'
 HEADER_COLOR = (201, 104, 104)
 
+COUNTER_POS_X = 25
+COUNTER_POS_Y = 25
+COUNTER_FONT_SIZE = 20
+COUNTER_FONT_NAME = 'arialblack'
+COUNTER_COLOR = (201, 104, 104)
+
 HOME_BTN_SIZE = 50
 HOME_BTN_GAP = 70
 
 _selected = False
 _selected_pos = None
+header = ""
 
 class GameScreen(Screen, ABC):
 
@@ -157,9 +167,18 @@ class GameScreen(Screen, ABC):
         self.reload_screen()
 
     def move_obj(self, source, dest):
-        global _selected_pos, _selected
+        global _selected_pos, _selected, header
 
-        if b_act.move(source, dest):
+        cond = b_act.move(source, dest)
+
+        if cond != -2:
+            header = f'Player {b_act.active_player}\'s turn'
+
+            if cond != -1:
+                header = f'Player {cond} WON'
+                if cond == 0:
+                    header = f'DRAW'
+
             self.reload_screen()
             _selected = False
             _selected_pos = None
@@ -167,12 +186,20 @@ class GameScreen(Screen, ABC):
     def reload_screen(self):
         self.screen.fill(SCREEN_COLOR)
 
-        self.setup_header(self.screen, HEADER_FONT_NAME, HEADER_FONT_SIZE, self.header_txt, HEADER_COLOR, HEADER_POS_Y)
+        self.setup_header(self.screen, HEADER_FONT_NAME, HEADER_FONT_SIZE, header, HEADER_COLOR, HEADER_POS_Y)
         self.setup_home_btn()
+
+        #Counter
+        counter_text = f'Number of movements: {b_act.movement_count}'
+        header_font = pygame.font.SysFont(COUNTER_FONT_NAME, COUNTER_FONT_SIZE)
+        res = header_font.render(counter_text, True, COUNTER_COLOR)
+        self.screen.blit(res, (COUNTER_POS_X, COUNTER_POS_Y))
 
         self.draw_board()
 
     def setup(self):
+        global header
+
         pygame.init()
 
         self.screen = pygame.display.set_mode((self.sw, self.sh))
@@ -184,6 +211,7 @@ class GameScreen(Screen, ABC):
 
         b_act.setup_board()
 
+        header = f'Player {b_act.active_player}\'s turn'
         self.reload_screen()
 
     def update(self):
@@ -194,6 +222,9 @@ class GameScreen(Screen, ABC):
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                    self.setup()
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
