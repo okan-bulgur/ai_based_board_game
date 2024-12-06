@@ -8,7 +8,6 @@ opponent_player = ai_player % 2 + 1
 count = 0
 
 def play():
-    print("First:\n", b_act.state["board"])
     state_copy = copy.deepcopy(b_act.state)
     positions = b_act.get_list_of_pos(state_copy["board"], ai_player)
 

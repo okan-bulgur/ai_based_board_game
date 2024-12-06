@@ -1,8 +1,8 @@
 import numpy as np
 
-from src import BoardConf as bc
+from src.Config import BoardConfig as bc
 
-MAX_MOVEMENTS = 6
+MAX_MOVEMENTS = 10
 
 state = {"active_player": 1, "num_of_movement": 2, "played_obj_pos": (-1, -1), "movement_count": 0, "board": np.zeros((bc.BOARD_ROWS, bc.BOARD_COLS))}
 
