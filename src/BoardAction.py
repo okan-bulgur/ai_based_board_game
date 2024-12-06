@@ -1,62 +1,58 @@
 import numpy as np
 
 from src import BoardConf as bc
-from src.AIManager import ai_player
 
 MAX_MOVEMENTS = 6
 
-board = np.zeros((bc.BOARD_ROWS, bc.BOARD_COLS))
-active_player = None
-num_of_movement = None
-played_obj_pos = None
-movement_count = None
+state = {"active_player": 1, "num_of_movement": 2, "played_obj_pos": (-1, -1), "movement_count": 0, "board": np.zeros((bc.BOARD_ROWS, bc.BOARD_COLS))}
+
+ai_play_mode = False
 
 def setup_board():
-    global board, active_player, played_obj_pos, movement_count, num_of_movement
-    active_player = 1
-    num_of_movement = 2
-    played_obj_pos = (-1, -1)
-    movement_count = 0
+    state["active_player"] = 1
+    state["num_of_movement"] = 2
+    state["played_obj_pos"] = (-1, -1)
+    state["movement_count"] = 0
 
-    board = np.zeros((bc.BOARD_ROWS, bc.BOARD_COLS))
+    state["board"] = np.zeros((bc.BOARD_ROWS, bc.BOARD_COLS))
 
-    board[0][0] = 1
-    board[0][2] = 1
-    board[6][4] = 1
-    board[6][6] = 1
+    state["board"][0][0] = 1
+    state["board"][0][2] = 1
+    state["board"][6][4] = 1
+    state["board"][6][6] = 1
 
-    board[6][0] = 2
-    board[6][2] = 2
-    board[0][4] = 2
-    board[0][6] = 2
+    state["board"][6][0] = 2
+    state["board"][6][2] = 2
+    state["board"][0][4] = 2
+    state["board"][0][6] = 2
 
-def get_movement_count():
-    return 2 if np.count_nonzero(board == active_player) > 1 else 1
+def get_movement_count(state_cpy):
+    return 2 if np.count_nonzero(state_cpy["board"] == state_cpy["active_player"]) > 1 else 1
 
-def getListOfPos(tmp_board, player):
+def get_list_of_pos(board, player):
     pos = []
 
     for i in range(bc.BOARD_ROWS):
         for j in range(bc.BOARD_COLS):
-            if tmp_board[i][j] == player:
+            if board[i][j] == player:
                 pos.append((i,j))
 
     return pos
 
 def unselect_obj(pos):
-    board[pos[0]][pos[1]] = active_player
+    state["board"][pos[0]][pos[1]] = state["active_player"]
 
 def check_pos_empty(pos):
-    return board[pos[0]][pos[1]] == 0
+    return state["board"][pos[0]][pos[1]] == 0
 
-def check_movement(tmp_board, source, dest):
+def check_movement(state_cpy, source, dest):
     if dest[0] < 0 or dest[0] >= bc.BOARD_ROWS or dest[1] < 0 or dest[1] >= bc.BOARD_COLS:
         return False
 
-    if not ((source[0] == dest[0] or source[1] == dest[1]) and played_obj_pos != source):
+    if not ((source[0] == dest[0] or source[1] == dest[1]) and state_cpy["played_obj_pos"] != source):
         return False
 
-    if tmp_board[dest[0]][dest[1]] != 0:
+    if state_cpy["board"][dest[0]][dest[1]] != 0:
         return False
 
     if source[0] == dest[0] and abs(source[1] - dest[1]) == 1:
@@ -67,34 +63,31 @@ def check_movement(tmp_board, source, dest):
 
     return False
 
-def death(tmp_board, del_list):
-    global played_obj_pos, num_of_movement
+def death(state_cpy, del_list):
     for col, row in del_list:
-        tmp_board[col][row] = 0
+        state_cpy["board"][col][row] = 0
 
     #todo: fix this part (I thing its wrong)
-    if np.count_nonzero(tmp_board == active_player) == 1:
-        num_of_movement = 1
-        played_obj_pos = (-1, -1)
+    if np.count_nonzero(state_cpy["board"] == state_cpy["active_player"]) == 1:
+        state_cpy["num_of_movement"] = 1
+        state_cpy["played_obj_pos"] = (-1, -1)
 
-    return tmp_board
-
-def check_death(tmp_board, row, col, player, init, init_control, del_tmp, board_size):
+def check_death(board, row, col, player, init, init_control, del_tmp, board_size):
     del_list = np.empty((0, 2), int)
 
-    if tmp_board[col][row] == (player % 2) + 1 and init_control == init + 1:
+    if board[col][row] == (player % 2) + 1 and init_control == init + 1:
         init = init_control
         del_tmp = np.vstack([del_tmp, (col, row)])
 
-    elif tmp_board[col][row] == (player % 2) + 1 and not init_control == init + 1:
+    elif board[col][row] == (player % 2) + 1 and not init_control == init + 1:
         init = -1
         del_tmp = np.empty((0, 2), int)
 
-    elif tmp_board[col][row] == player and del_tmp.size == 0:
+    elif board[col][row] == player and del_tmp.size == 0:
         init = init_control
         del_list = np.vstack((del_list, del_tmp))
 
-    elif tmp_board[col][row] == player and del_tmp.size != 0 and init_control == init + 1:
+    elif board[col][row] == player and del_tmp.size != 0 and init_control == init + 1:
         init = init_control
         del_list = np.vstack((del_list, del_tmp))
         del_tmp = np.empty((0, 2), int)
@@ -104,7 +97,13 @@ def check_death(tmp_board, row, col, player, init, init_control, del_tmp, board_
 
     return del_list, del_tmp, init
 
-def control_death(tmp_board, pos):
+def control_death(state_cpy, pos):
+
+    if ((pos[0] - 1 < 0 or state_cpy["board"][pos[0] - 1][pos[1]] == 0)
+            and (pos[0] + 1 >= bc.BOARD_ROWS or state_cpy["board"][pos[0] + 1][pos[1]] == 0)
+            and (pos[1] - 1 < 0 or state_cpy["board"][pos[0]][pos[1] - 1] == 0)
+            and (pos[1] + 1 >= bc.BOARD_COLS or state_cpy["board"][pos[0]][pos[1] + 1] == 0)):
+        return
 
     del_list = np.empty((0, 2), int)
     del_tmp_1 = np.empty((0, 2), int)
@@ -116,10 +115,10 @@ def control_death(tmp_board, pos):
     init_1, init_2 = -1, -1
 
     for col in range(bc.BOARD_COLS):
-        del_l, del_tmp_1, init_1 = check_death(tmp_board, row, col, 1, init_1, col, del_tmp_1, bc.BOARD_COLS)
+        del_l, del_tmp_1, init_1 = check_death(state_cpy["board"], row, col, 1, init_1, col, del_tmp_1, bc.BOARD_COLS)
         del_list = np.vstack((del_list, del_l))
 
-        del_l, del_tmp_2, init_2 = check_death(tmp_board, row, col, 2, init_2, col, del_tmp_2, bc.BOARD_COLS)
+        del_l, del_tmp_2, init_2 = check_death(state_cpy["board"], row, col, 2, init_2, col, del_tmp_2, bc.BOARD_COLS)
         del_list = np.vstack((del_list, del_l))
 
     del_tmp_1 = np.empty((0, 2), int)
@@ -131,19 +130,19 @@ def control_death(tmp_board, pos):
     init_1, init_2 = -1, -1
 
     for row in range(bc.BOARD_ROWS):
-        del_l, del_tmp_1, init_1 = check_death(tmp_board, row, col, 1, init_1, row, del_tmp_1, bc.BOARD_ROWS)
+        del_l, del_tmp_1, init_1 = check_death(state_cpy["board"], row, col, 1, init_1, row, del_tmp_1, bc.BOARD_ROWS)
         del_list = np.vstack((del_list, del_l))
 
-        del_l, del_tmp_2, init_2 = check_death(tmp_board, row, col, 2, init_2, row, del_tmp_2, bc.BOARD_ROWS)
+        del_l, del_tmp_2, init_2 = check_death(state_cpy["board"], row, col, 2, init_2, row, del_tmp_2, bc.BOARD_ROWS)
         del_list = np.vstack((del_list, del_l))
 
-    death(tmp_board, del_list)
+    death(state_cpy, del_list)
 
-def control_win_cond(tmp_board):
-    p1_count = np.count_nonzero(tmp_board == 1)
-    p2_count = np.count_nonzero(tmp_board == 2)
+def control_win_cond(state_cpy):
+    p1_count = np.count_nonzero(state_cpy["board"] == 1)
+    p2_count = np.count_nonzero(state_cpy["board"] == 2)
 
-    if movement_count == MAX_MOVEMENTS:
+    if state_cpy["movement_count"] == MAX_MOVEMENTS:
         if p1_count == p2_count:
             return 0
 
@@ -165,28 +164,26 @@ def control_win_cond(tmp_board):
 
     return -1
 
-def move(tmp_board, player, source, dest):
-    global active_player, num_of_movement, played_obj_pos, movement_count
+def move(state_cpy, player, source, dest):
 
-    if player != active_player:
-        return tmp_board
+    if player != state_cpy["active_player"]:
+        return state_cpy
 
-    if check_movement(tmp_board, source, dest):
-        tmp_board[dest[0]][dest[1]] = tmp_board[source[0]][source[1]] / 3
-        tmp_board[source[0]][source[1]] = 0
+    if check_movement(state_cpy, source, dest):
+        state_cpy["board"][dest[0]][dest[1]] = state_cpy["board"][source[0]][source[1]] / 3
 
-        if active_player == ai_player:
-            tmp_board[dest[0]][dest[1]] = player
+        if ai_play_mode:
+            state_cpy["board"][dest[0]][dest[1]] = state_cpy["board"][source[0]][source[1]]
 
-        played_obj_pos = dest
-        num_of_movement -= 1
+        state_cpy["board"][source[0]][source[1]] = 0
 
-        if num_of_movement == 0:
-            active_player = player % 2 + 1
-            num_of_movement = get_movement_count()
-            played_obj_pos = (-1, -1)
+        state_cpy["played_obj_pos"] = dest
+        state_cpy["num_of_movement"] -= 1
 
-        movement_count += 1
-        control_death(tmp_board, dest)
+        if state_cpy["num_of_movement"] == 0:
+            state_cpy["active_player"] = player % 2 + 1
+            state_cpy["num_of_movement"] = get_movement_count(state_cpy)
+            state_cpy["played_obj_pos"] = (-1, -1)
 
-    return tmp_board
+        state_cpy["movement_count"] += 1
+        control_death(state_cpy, dest)

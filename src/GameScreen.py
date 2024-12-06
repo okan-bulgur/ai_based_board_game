@@ -30,6 +30,7 @@ HOME_BTN_GAP = 70
 _selected = False
 _selected_pos = None
 header = ""
+play_mode = -1
 
 class GameScreen(Screen, ABC):
 
@@ -123,7 +124,7 @@ class GameScreen(Screen, ABC):
 
         for row in range(bc.BOARD_ROWS):
             for col in range(bc.BOARD_COLS):
-                self.draw_obj((row, col), b_act.board[row][col])
+                self.draw_obj((row, col), b_act.state["board"][row][col])
 
     def find_clicked_board_pos(self, pos):
         pos_x, pos_y = pos
@@ -143,11 +144,11 @@ class GameScreen(Screen, ABC):
         if row == -1:
             return False
 
-        if b_act.board[row][col] == b_act.active_player:
-            b_act.board[row][col] *= 3
+        if b_act.state["board"][row][col] == b_act.state["active_player"]:
+            b_act.state["board"][row][col] *= 3
             return True
 
-        if b_act.board[row][col] != b_act.active_player:
+        if b_act.state["board"][row][col] != b_act.state["active_player"]:
             return False
 
     def unselect_obj(self):
@@ -164,25 +165,29 @@ class GameScreen(Screen, ABC):
         _selected_pos = self.find_clicked_board_pos(pos) if _selected else None
         self.reload_screen()
 
+    def update_header(self):
+        global _selected_pos, _selected, header, play_mode
+
+        cond = b_act.control_win_cond(b_act.state)
+
+        header = f'Player {b_act.state["active_player"]}\'s turn'
+
+        if cond != -1:
+            play_mode = -1
+            header = f'Player {cond} WON'
+            if cond == 0:
+                header = f'DRAW'
+
+        self.reload_screen()
+        _selected = False
+        _selected_pos = None
+
     def move_obj(self, source, dest):
         global _selected_pos, _selected, header
 
-        tmp_board = b_act.move(np.copy(b_act.board), b_act.active_player, source, dest)
+        b_act.move(b_act.state, b_act.state["active_player"], source, dest)
 
-        if not np.array_equal(b_act.board, tmp_board):
-            b_act.board = tmp_board
-            cond = b_act.control_win_cond(b_act.board)
-
-            header = f'Player {b_act.active_player}\'s turn'
-
-            if cond != -1:
-                header = f'Player {cond} WON'
-                if cond == 0:
-                    header = f'DRAW'
-
-            self.reload_screen()
-            _selected = False
-            _selected_pos = None
+        self.update_header()
 
     def reload_screen(self):
         self.screen.fill(SCREEN_COLOR)
@@ -191,7 +196,7 @@ class GameScreen(Screen, ABC):
         self.setup_home_btn()
 
         #Counter
-        counter_text = f'Number of movements: {b_act.movement_count}'
+        counter_text = f'Number of movements: {b_act.state["movement_count"]}'
         header_font = pygame.font.SysFont(COUNTER_FONT_NAME, COUNTER_FONT_SIZE)
         res = header_font.render(counter_text, True, COUNTER_COLOR)
         self.screen.blit(res, (COUNTER_POS_X, COUNTER_POS_Y))
@@ -199,7 +204,7 @@ class GameScreen(Screen, ABC):
         self.draw_board()
 
     def setup(self):
-        global header
+        global header, play_mode
 
         pygame.init()
 
@@ -212,15 +217,16 @@ class GameScreen(Screen, ABC):
 
         b_act.setup_board()
 
-        header = f'Player {b_act.active_player}\'s turn'
+        header = f'Player {b_act.state["active_player"]}\'s turn'
         self.reload_screen()
-
-    def update(self):
-        global _selected_pos, _selected
 
         play_mode = 2
 
+    def update(self):
+        global _selected_pos, _selected, play_mode
+
         while True:
+            print(play_mode)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -244,11 +250,13 @@ class GameScreen(Screen, ABC):
                             self.unselect_obj()
 
                 if play_mode == 2:
-                    if b_act.active_player == ai.ai_player:
+                    if b_act.state["active_player"] == ai.ai_player:
+                        b_act.ai_play_mode = True
                         ai.play()
-                        self.reload_screen()
+                        b_act.ai_play_mode = False
+                        self.update_header()
 
-                    elif b_act.active_player == ai.ai_player % 2 + 1:
+                    elif b_act.state["active_player"] == ai.ai_player % 2 + 1:
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             if event.button == 1:
                                 if _selected:
