@@ -1,15 +1,14 @@
-from turtledemo.clock import setup
-
-from src.BoardAction import movement_count
 from src.Screen import Screen
 from src.Button import Button
 from src import ScreenManager as sm
 from src import BoardAction as b_act
 from src import BoardConf as bc
+from src import AIManager as ai
 
 from abc import ABC
 import sys
 import pygame
+import numpy as np
 
 SCREEN_COLOR = (255, 244, 234)
 CAPTION = 'AI Based Board Game'
@@ -153,7 +152,6 @@ class GameScreen(Screen, ABC):
 
     def unselect_obj(self):
         global _selected_pos, _selected
-
         b_act.unselect_obj(_selected_pos)
         _selected = False
         _selected_pos = None
@@ -169,9 +167,12 @@ class GameScreen(Screen, ABC):
     def move_obj(self, source, dest):
         global _selected_pos, _selected, header
 
-        cond = b_act.move(source, dest)
+        tmp_board = b_act.move(np.copy(b_act.board), b_act.active_player, source, dest)
 
-        if cond != -2:
+        if not np.array_equal(b_act.board, tmp_board):
+            b_act.board = tmp_board
+            cond = b_act.control_win_cond(b_act.board)
+
             header = f'Player {b_act.active_player}\'s turn'
 
             if cond != -1:
@@ -217,6 +218,8 @@ class GameScreen(Screen, ABC):
     def update(self):
         global _selected_pos, _selected
 
+        play_mode = 2
+
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -226,21 +229,41 @@ class GameScreen(Screen, ABC):
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                     self.setup()
 
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        if _selected:
-                            new_pos = self.find_clicked_board_pos(event.pos)
-                            if b_act.check_pos_empty(new_pos):
-                                self.move_obj(_selected_pos, new_pos)
+                if play_mode == 1:
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if event.button == 1:
+                            if _selected:
+                                new_pos = self.find_clicked_board_pos(event.pos)
+                                if b_act.check_pos_empty(new_pos):
+                                    self.move_obj(_selected_pos, new_pos)
 
-                        else:
-                            self.select_obj(event.pos)
+                            else:
+                                self.select_obj(event.pos)
 
-                    elif event.button == 3 and _selected:
-                        self.unselect_obj()
+                        elif event.button == 3 and _selected:
+                            self.unselect_obj()
 
-                    if self.home_btn.is_clicked(event.pos):
-                        sm.change_screen(sm.menuScreen)
-                        pygame.quit()
+                if play_mode == 2:
+                    if b_act.active_player == ai.ai_player:
+                        ai.play()
+                        self.reload_screen()
 
+                    elif b_act.active_player == ai.ai_player % 2 + 1:
+                        if event.type == pygame.MOUSEBUTTONDOWN:
+                            if event.button == 1:
+                                if _selected:
+                                    new_pos = self.find_clicked_board_pos(event.pos)
+                                    if b_act.check_pos_empty(new_pos):
+                                        self.move_obj(_selected_pos, new_pos)
+
+                                else:
+                                    self.select_obj(event.pos)
+
+                            elif event.button == 3 and _selected:
+                                self.unselect_obj()
+
+
+                if event.type == pygame.MOUSEBUTTONDOWN and self.home_btn.is_clicked(event.pos):
+                    sm.change_screen(sm.menuScreen)
+                    pygame.quit()
             pygame.display.flip()
