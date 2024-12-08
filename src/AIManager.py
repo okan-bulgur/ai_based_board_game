@@ -7,22 +7,45 @@ opponent_player = ai_player % 2 + 1
 
 count = 0
 
+def calculate_mobility(state, player):
+    positions = b_act.get_list_of_pos(state.get_board(), player)
+    count = 0
+
+    for pos in positions:
+        for dir in directions:
+            dest = tuple(p + d for p, d in zip(pos, dir))
+            if b_act.check_movement(state, pos, dest):
+                count += 1
+
+    return count
+
 def evaluation(state):
     p1_count = np.count_nonzero(state.get_board() == ai_player)
     p2_count = np.count_nonzero(state.get_board() == opponent_player)
 
-    return p1_count - p2_count
+    center_board = state.get_board()[2:5, 2:5]
+    p1_count_center = np.count_nonzero(center_board == ai_player)
+    p2_count_center = np.count_nonzero(center_board == opponent_player)
+
+    mobility_p1 = calculate_mobility(state, ai_player)
+    mobility_p2 = calculate_mobility(state, opponent_player)
+
+    score = 10 * (p1_count - p2_count)
+    score += 5 * (p1_count_center - p2_count_center)
+    score += 2 * (mobility_p1 - mobility_p2)
+
+    return score
 
 def get_point(state):
     cond = b_act.control_win_cond(state)
     eval_point = evaluation(state)
 
     if cond == 0:
-        return 0 + eval_point
+        return eval_point
     elif cond == ai_player:
-        return 10 + eval_point
+        return 100 + eval_point
     elif cond == opponent_player:
-        return -10 + eval_point
+        return -100 + eval_point
 
     return None
 
@@ -59,6 +82,9 @@ def minmax(state, is_max, alpha=float("-inf"), beta=float("inf"), depth=0):
     global count
     count += 1
 
+    if depth == 4:
+        return evaluation(state)
+
     point = get_point(state)
     if point is not None:
         return point
@@ -94,7 +120,6 @@ def minmax(state, is_max, alpha=float("-inf"), beta=float("inf"), depth=0):
                                 alpha = max(alpha, best_score)
 
                                 if alpha >= beta:
-                                    print("1) Pruning alpha: ", alpha, " beta: ", beta)
                                     return best_score
 
         return best_score
@@ -130,8 +155,6 @@ def minmax(state, is_max, alpha=float("-inf"), beta=float("inf"), depth=0):
                                 beta = min(beta, best_score)
 
                                 if alpha >= beta:
-                                    print("2) Pruning alpha: ", alpha, " beta: ", beta)
                                     return best_score
 
         return best_score
-

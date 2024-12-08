@@ -7,10 +7,8 @@ from src.Config import GameScreenConfig as gsc
 from src import AIManager as ai
 
 from abc import ABC
-import threading
 import pygame
 import sys
-import time
 
 class GameScreen(Screen, ABC):
 
@@ -30,11 +28,6 @@ class GameScreen(Screen, ABC):
         self.selected_pos = None
         self.header = ""
         self.play_mode = 2
-
-        self.running = True
-        self.pause_event = threading.Event()
-        self.pause_event.set()
-        self.update_thread = threading.Thread(target=self.update)
 
     def setup_home_btn(self):
         home_img = pygame.image.load('res/home.png').convert_alpha()
@@ -184,6 +177,9 @@ class GameScreen(Screen, ABC):
         self.draw_board()
 
     def human_action(self, event):
+        if b_act.control_win_cond(b_act.state) != -1:
+            return
+
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 if self.selected:
@@ -197,8 +193,10 @@ class GameScreen(Screen, ABC):
             elif event.button == 3 and self.selected:
                 self.unselect_obj()
 
-
     def ai_mode_event(self, event):
+        if b_act.control_win_cond(b_act.state) != -1:
+            return
+
         if b_act.state.get_active_player() == ai.ai_player:
             b_act.ai_play_mode = True
             ai.play()
@@ -221,23 +219,15 @@ class GameScreen(Screen, ABC):
 
         self.reload_screen()
 
-        if not self.pause_event.is_set():
-            self.pause_event.set()
-
-        if not self.update_thread.is_alive():
-            self.update_thread.start()
-
+        pygame.display.update()
 
     def update(self):
-        while self.running:
+        while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.running = False
-                    pygame.quit()
                     sys.exit()
 
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                    self.pause_event.clear()
                     self.setup()
 
                 if self.play_mode == 1:
@@ -251,4 +241,3 @@ class GameScreen(Screen, ABC):
                     pygame.quit()
 
             pygame.display.flip()
-            time.sleep(0.1)

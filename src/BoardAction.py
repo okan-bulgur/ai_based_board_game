@@ -3,7 +3,7 @@ import numpy as np
 from src.Config import BoardConfig as bc
 from src.State import State
 
-MAX_MOVEMENTS = 9
+MAX_MOVEMENTS = 50
 
 state = State(np.zeros((bc.BOARD_ROWS, bc.BOARD_COLS)), 1, 2, 0, (-1, -1))
 
