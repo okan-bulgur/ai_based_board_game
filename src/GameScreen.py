@@ -176,7 +176,7 @@ class GameScreen(Screen, ABC):
         self.setup_home_btn()
 
         #Counter
-        counter_text = f'Number of movements: {b_act.state["movement_count"]}'
+        counter_text = f'Number of movements: {b_act.state["movement_count"]} / {b_act.MAX_MOVEMENTS}'
         header_font = pygame.font.SysFont(gsc.COUNTER_FONT_NAME, gsc.COUNTER_FONT_SIZE)
         res = header_font.render(counter_text, True, gsc.COUNTER_COLOR)
         self.screen.blit(res, (gsc.COUNTER_POS_X, gsc.COUNTER_POS_Y))

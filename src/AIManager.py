@@ -1,4 +1,5 @@
 from src import BoardAction as b_act
+import numpy as np
 import copy
 
 directions = [(-1,0), (1,0), (0,-1), (0,1)]
@@ -6,6 +7,25 @@ ai_player = 1
 opponent_player = ai_player % 2 + 1
 
 count = 0
+
+def evaluation(state):
+    p1_count = np.count_nonzero(state["board"] == ai_player)
+    p2_count = np.count_nonzero(state["board"] == opponent_player)
+
+    return p1_count - p2_count
+
+def get_point(state):
+    cond = b_act.control_win_cond(state)
+    eval_point = evaluation(state)
+
+    if cond == 0:
+        return 0 + eval_point
+    elif cond == ai_player:
+        return 10 + eval_point
+    elif cond == opponent_player:
+        return -10 + eval_point
+
+    return None
 
 def play():
     state_copy = copy.deepcopy(b_act.state)
@@ -18,12 +38,14 @@ def play():
     for pos in positions:
         for dir in directions:
             dest = tuple(p + d for p, d in zip(pos, dir))
+            print("Pos: ", pos ," Dest:", dest)
             if b_act.check_movement(state_copy, pos, dest):
 
                 state_copy_1 = copy.deepcopy(state_copy)
                 b_act.move(state_copy_1, ai_player, pos, dest)
 
                 score = minmax(state_copy_1, True)
+                print("Score: ", score)
 
                 if score > best_score:
                     best_score = score
@@ -37,9 +59,10 @@ def play():
 def minmax(state, is_max, alpha=float("-inf"), beta=float("inf"), depth=0):
     global count
     count += 1
-    cond = b_act.control_win_cond(state)
-    if cond != -1:
-        return cond
+
+    point = get_point(state)
+    if point is not None:
+        return point
 
     if is_max:
         best_score = float("-inf")
@@ -53,9 +76,9 @@ def minmax(state, is_max, alpha=float("-inf"), beta=float("inf"), depth=0):
                     state_copy_1 = copy.deepcopy(state)
                     b_act.move(state_copy_1, ai_player, pos1, dest1)
 
-                    cond = b_act.control_win_cond(state_copy_1)
-                    if cond != -1:
-                        return cond
+                    point = get_point(state_copy_1)
+                    if point is not None:
+                        return point
 
                     positions_after_first = b_act.get_list_of_pos(state_copy_1["board"], ai_player)
                     for pos2 in positions_after_first:
@@ -72,6 +95,7 @@ def minmax(state, is_max, alpha=float("-inf"), beta=float("inf"), depth=0):
                                 alpha = max(alpha, best_score)
 
                                 if alpha >= beta:
+                                    print("1) Pruning alpha: ", alpha, " beta: ", beta)
                                     return best_score
 
         return best_score
@@ -88,9 +112,9 @@ def minmax(state, is_max, alpha=float("-inf"), beta=float("inf"), depth=0):
                     state_copy_1 = copy.deepcopy(state)
                     b_act.move(state_copy_1, opponent_player, pos1, dest1)
 
-                    cond = b_act.control_win_cond(state_copy_1)
-                    if cond != -1:
-                        return cond
+                    point = get_point(state_copy_1)
+                    if point is not None:
+                        return point
 
                     positions_after_first = b_act.get_list_of_pos(state_copy_1["board"], opponent_player)
                     for pos2 in positions_after_first:
@@ -103,10 +127,11 @@ def minmax(state, is_max, alpha=float("-inf"), beta=float("inf"), depth=0):
 
                                 score = minmax(state_copy_2, not is_max, alpha, beta, depth + 2)
 
-                                best_score = max(best_score, score)
+                                best_score = min(best_score, score)
                                 beta = min(beta, best_score)
 
                                 if alpha >= beta:
+                                    print("2) Pruning alpha: ", alpha, " beta: ", beta)
                                     return best_score
 
         return best_score
