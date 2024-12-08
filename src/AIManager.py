@@ -1,6 +1,5 @@
 from src import BoardAction as b_act
 import numpy as np
-import copy
 
 directions = [(-1,0), (1,0), (0,-1), (0,1)]
 ai_player = 1
@@ -9,8 +8,8 @@ opponent_player = ai_player % 2 + 1
 count = 0
 
 def evaluation(state):
-    p1_count = np.count_nonzero(state["board"] == ai_player)
-    p2_count = np.count_nonzero(state["board"] == opponent_player)
+    p1_count = np.count_nonzero(state.get_board() == ai_player)
+    p2_count = np.count_nonzero(state.get_board() == opponent_player)
 
     return p1_count - p2_count
 
@@ -28,8 +27,8 @@ def get_point(state):
     return None
 
 def play():
-    state_copy = copy.deepcopy(b_act.state)
-    positions = b_act.get_list_of_pos(state_copy["board"], ai_player)
+    state_copy = b_act.state.__copy__()
+    positions = b_act.get_list_of_pos(state_copy.get_board(), ai_player)
 
     best_score = float("-inf")
     move_source = (-1, -1)
@@ -41,7 +40,7 @@ def play():
             print("Pos: ", pos ," Dest:", dest)
             if b_act.check_movement(state_copy, pos, dest):
 
-                state_copy_1 = copy.deepcopy(state_copy)
+                state_copy_1 = state_copy.__copy__()
                 b_act.move(state_copy_1, ai_player, pos, dest)
 
                 score = minmax(state_copy_1, True)
@@ -66,27 +65,27 @@ def minmax(state, is_max, alpha=float("-inf"), beta=float("inf"), depth=0):
 
     if is_max:
         best_score = float("-inf")
-        positions = b_act.get_list_of_pos(state["board"], ai_player)
+        positions = b_act.get_list_of_pos(state.get_board(), ai_player)
 
         for pos1 in positions:
             for dir1 in directions:
                 dest1 = tuple(p + d for p, d in zip(pos1, dir1))
 
                 if b_act.check_movement(state, pos1, dest1):
-                    state_copy_1 = copy.deepcopy(state)
+                    state_copy_1 = state.__copy__()
                     b_act.move(state_copy_1, ai_player, pos1, dest1)
 
                     point = get_point(state_copy_1)
                     if point is not None:
                         return point
 
-                    positions_after_first = b_act.get_list_of_pos(state_copy_1["board"], ai_player)
+                    positions_after_first = b_act.get_list_of_pos(state_copy_1.get_board(), ai_player)
                     for pos2 in positions_after_first:
                         for dir2 in directions:
                             dest2 = tuple(p + d for p, d in zip(pos2, dir2))
                             if b_act.check_movement(state_copy_1, pos2, dest2):
 
-                                state_copy_2 = copy.deepcopy(state_copy_1)
+                                state_copy_2 = state_copy_1.__copy__()
                                 b_act.move(state_copy_2, ai_player, pos2, dest2)
 
                                 score = minmax(state_copy_2, not is_max, alpha, beta, depth + 2)
@@ -102,27 +101,27 @@ def minmax(state, is_max, alpha=float("-inf"), beta=float("inf"), depth=0):
 
     else:
         best_score = float("inf")
-        positions = b_act.get_list_of_pos(state["board"], opponent_player)
+        positions = b_act.get_list_of_pos(state.get_board(), opponent_player)
 
         for pos1 in positions:
             for dir1 in directions:
                 dest1 = tuple(p + d for p, d in zip(pos1, dir1))
                 if b_act.check_movement(state, pos1, dest1):
 
-                    state_copy_1 = copy.deepcopy(state)
+                    state_copy_1 = state.__copy__()
                     b_act.move(state_copy_1, opponent_player, pos1, dest1)
 
                     point = get_point(state_copy_1)
                     if point is not None:
                         return point
 
-                    positions_after_first = b_act.get_list_of_pos(state_copy_1["board"], opponent_player)
+                    positions_after_first = b_act.get_list_of_pos(state_copy_1.get_board(), opponent_player)
                     for pos2 in positions_after_first:
                         for dir2 in directions:
                             dest2 = tuple(p + d for p, d in zip(pos2, dir2))
                             if b_act.check_movement(state_copy_1, pos2, dest2):
 
-                                state_copy_2 = copy.deepcopy(state_copy_1)
+                                state_copy_2 = state_copy_1.__copy__()
                                 b_act.move(state_copy_2, opponent_player, pos2, dest2)
 
                                 score = minmax(state_copy_2, not is_max, alpha, beta, depth + 2)

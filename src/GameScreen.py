@@ -113,7 +113,7 @@ class GameScreen(Screen, ABC):
 
         for row in range(bc.BOARD_ROWS):
             for col in range(bc.BOARD_COLS):
-                self.draw_obj((row, col), b_act.state["board"][row][col])
+                self.draw_obj((row, col), b_act.state.get_value_of_board(row, col))
 
     def find_clicked_board_pos(self, pos):
         pos_x, pos_y = pos
@@ -133,11 +133,11 @@ class GameScreen(Screen, ABC):
         if row == -1:
             return False
 
-        if b_act.state["board"][row][col] == b_act.state["active_player"]:
-            b_act.state["board"][row][col] *= 3
+        if b_act.state.get_value_of_board(row, col) == b_act.state.get_active_player():
+            b_act.state.update_board(row, col, b_act.state.get_value_of_board(row, col) * 3)
             return True
 
-        if b_act.state["board"][row][col] != b_act.state["active_player"]:
+        if b_act.state.get_value_of_board(row, col) == b_act.state.get_active_player():
             return False
 
     def unselect_obj(self):
@@ -154,7 +154,7 @@ class GameScreen(Screen, ABC):
     def update_header(self):
         cond = b_act.control_win_cond(b_act.state)
 
-        self.header = f'Player {b_act.state["active_player"]}\'s turn'
+        self.header = f'Player {b_act.state.get_active_player()}\'s turn'
 
         if cond != -1:
             self.header = f'Player {cond} WON'
@@ -166,7 +166,7 @@ class GameScreen(Screen, ABC):
         self.selected_pos = None
 
     def move_obj(self, source, dest):
-        b_act.move(b_act.state, b_act.state["active_player"], source, dest)
+        b_act.move(b_act.state, b_act.state.get_active_player(), source, dest)
         self.update_header()
 
     def reload_screen(self):
@@ -176,7 +176,7 @@ class GameScreen(Screen, ABC):
         self.setup_home_btn()
 
         #Counter
-        counter_text = f'Number of movements: {b_act.state["movement_count"]} / {b_act.MAX_MOVEMENTS}'
+        counter_text = f'Number of movements: {b_act.state.get_movement_count()} / {b_act.MAX_MOVEMENTS}'
         header_font = pygame.font.SysFont(gsc.COUNTER_FONT_NAME, gsc.COUNTER_FONT_SIZE)
         res = header_font.render(counter_text, True, gsc.COUNTER_COLOR)
         self.screen.blit(res, (gsc.COUNTER_POS_X, gsc.COUNTER_POS_Y))
@@ -199,13 +199,13 @@ class GameScreen(Screen, ABC):
 
 
     def ai_mode_event(self, event):
-        if b_act.state["active_player"] == ai.ai_player:
+        if b_act.state.get_active_player() == ai.ai_player:
             b_act.ai_play_mode = True
             ai.play()
             b_act.ai_play_mode = False
             self.update_header()
 
-        elif b_act.state["active_player"] == ai.ai_player % 2 + 1:
+        elif b_act.state.get_active_player()  == ai.ai_player % 2 + 1:
             self.human_action(event)
 
     def setup(self):
@@ -215,16 +215,16 @@ class GameScreen(Screen, ABC):
         self.screen.fill(gsc.SCREEN_COLOR)
         pygame.display.set_caption(gsc.CAPTION)
 
-        b_act.setup_board()
+        b_act.setup_state()
 
-        self.header = f'Player {b_act.state["active_player"]}\'s turn'
+        self.header = f'Player {b_act.state.get_active_player()}\'s turn'
 
         self.reload_screen()
 
         if not self.pause_event.is_set():
             self.pause_event.set()
 
-        elif not self.update_thread.is_alive():
+        if not self.update_thread.is_alive():
             self.update_thread.start()
 
 
