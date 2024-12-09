@@ -30,7 +30,7 @@ class GameScreen(Screen, ABC):
         self.play_mode = 2
 
     def setup_home_btn(self):
-        home_img = pygame.image.load('res/home.png').convert_alpha()
+        home_img = pygame.image.load('../res/home.png').convert_alpha()
         home_img.fill((0, 0, 0, 100), special_flags=pygame.BLEND_RGBA_MULT)
         self.home_btn = Button(self.sw-gsc.HOME_BTN_GAP, gsc.HOME_BTN_GAP - gsc.HOME_BTN_SIZE, gsc.HOME_BTN_SIZE, gsc.HOME_BTN_SIZE,
                                btn_color=gsc.SCREEN_COLOR, icon=home_img)
@@ -160,6 +160,9 @@ class GameScreen(Screen, ABC):
 
     def move_obj(self, source, dest):
         b_act.move(b_act.state, b_act.state.get_active_player(), source, dest)
+        if b_act.state.get_value_of_board(source[0], source[1]) == b_act.state.get_active_player() * 3:
+            b_act.state.update_board(source[0], source[1], b_act.state.get_active_player())
+
         self.update_header()
 
     def reload_screen(self):
