@@ -142,7 +142,10 @@ def control_death(state_cpy, pos):
 
 def control_win_cond(state_cpy):
     p1_count = np.count_nonzero(state_cpy.get_board() == 1)
+    p1_count += np.count_nonzero(state_cpy.get_board() == 3)
+
     p2_count = np.count_nonzero(state_cpy.get_board() == 2)
+    p2_count += np.count_nonzero(state_cpy.get_board() == 6)
 
     if state_cpy.get_movement_count() == MAX_MOVEMENTS:
         if p1_count == p2_count:

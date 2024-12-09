@@ -50,6 +50,8 @@ def get_point(state):
     return None
 
 def play():
+    global count
+    count = 0
     state_copy = b_act.state.__copy__()
     positions = b_act.get_list_of_pos(state_copy.get_board(), ai_player)
 

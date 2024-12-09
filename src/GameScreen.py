@@ -130,7 +130,7 @@ class GameScreen(Screen, ABC):
             b_act.state.update_board(row, col, b_act.state.get_value_of_board(row, col) * 3)
             return True
 
-        if b_act.state.get_value_of_board(row, col) == b_act.state.get_active_player():
+        if b_act.state.get_value_of_board(row, col) != b_act.state.get_active_player():
             return False
 
     def unselect_obj(self):
@@ -172,10 +172,15 @@ class GameScreen(Screen, ABC):
         self.setup_home_btn()
 
         #Counter
-        counter_text = f'Number of movements: {b_act.state.get_movement_count()} / {b_act.MAX_MOVEMENTS}'
+        counter_text = f'Total number of movements: {b_act.state.get_movement_count()} / {b_act.MAX_MOVEMENTS}'
+        player_counter_text = f'Player\'s Number of movements: {b_act.state.get_num_of_movement()}'
+
         header_font = pygame.font.SysFont(gsc.COUNTER_FONT_NAME, gsc.COUNTER_FONT_SIZE)
         res = header_font.render(counter_text, True, gsc.COUNTER_COLOR)
         self.screen.blit(res, (gsc.COUNTER_POS_X, gsc.COUNTER_POS_Y))
+
+        res = header_font.render(player_counter_text, True, gsc.COUNTER_COLOR)
+        self.screen.blit(res, (gsc.COUNTER_POS_X, gsc.COUNTER_POS_Y + 30))
 
         self.draw_board()
 
