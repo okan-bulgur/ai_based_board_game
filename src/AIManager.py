@@ -32,7 +32,7 @@ def evaluation(state):
     mobility_p2 = calculate_mobility(state, opponent_player)
 
     score = 10 * (p1_count - p2_count)
-    score += 5 * (p1_count_center - p2_count_center)
+    #score += 5 * (p1_count_center - p2_count_center)
     score += 2 * (mobility_p1 - mobility_p2)
 
     return score

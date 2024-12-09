@@ -72,9 +72,11 @@ class MenuScreen(Screen, ABC):
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if self.button1.is_clicked(event.pos):
+                        sm.gameScreen.play_mode = 1
                         sm.change_screen(sm.gameScreen)
                         pygame.quit()
                     elif self.button2.is_clicked(event.pos):
+                        sm.gameScreen.play_mode = 2
                         sm.change_screen(sm.gameScreen)
                         pygame.quit()
 

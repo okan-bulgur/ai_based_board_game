@@ -1,3 +1,4 @@
+import os
 import time
 
 from src.Screen import Screen
@@ -32,7 +33,9 @@ class GameScreen(Screen, ABC):
         self.play_mode = 2
 
     def setup_home_btn(self):
-        home_img = pygame.image.load('../res/home.png').convert_alpha()
+        base_dir = os.path.dirname(__file__)
+        home_img_path = os.path.join(base_dir, '..', 'res', 'home.png')
+        home_img = pygame.image.load(home_img_path).convert_alpha()
         home_img.fill((0, 0, 0, 100), special_flags=pygame.BLEND_RGBA_MULT)
         self.home_btn = Button(self.sw-gsc.HOME_BTN_GAP, gsc.HOME_BTN_GAP - gsc.HOME_BTN_SIZE, gsc.HOME_BTN_SIZE, gsc.HOME_BTN_SIZE,
                                btn_color=gsc.SCREEN_COLOR, icon=home_img)
@@ -149,12 +152,16 @@ class GameScreen(Screen, ABC):
     def update_header(self):
         cond = b_act.control_win_cond(b_act.state)
 
-        self.header = f'Player {b_act.state.get_active_player()}\'s turn'
+        if self.play_mode == 2:
+            self.header = f'AI is playing ...' if b_act.state.get_active_player() == ai.ai_player else f'Your Turn'
+        else:
+            self.header = f'Player {b_act.state.get_active_player()}\'s Turn'
 
         if cond != -1:
-            self.header = f'Player {cond} WON'
-            if cond == 0:
-                self.header = f'DRAW'
+            if self.play_mode == 2:
+                self.header = f'AI WON' if cond == ai.ai_player else f'You WON'
+            else:
+                self.header = f'Player {cond} WON' if cond != 0 else f'DRAW'
 
         self.reload_screen()
         self.selected = False
@@ -173,9 +180,13 @@ class GameScreen(Screen, ABC):
         self.setup_header(self.screen, gsc.HEADER_FONT_NAME, gsc.HEADER_FONT_SIZE, self.header, gsc.HEADER_COLOR, gsc.HEADER_POS_Y)
         self.setup_home_btn()
 
+        player_type = f'{b_act.state.get_active_player()}. Player'
+        if self.play_mode == 2:
+            player_type = "AI" if b_act.state.get_active_player() == ai.ai_player else "You"
+
         #Counter
-        counter_text = f'Total number of movements: {b_act.state.get_movement_count()} / {b_act.MAX_MOVEMENTS}'
-        player_counter_text = f'Player\'s Number of movements: {b_act.state.get_num_of_movement()}'
+        counter_text = f'Number of Moves Remaining: {b_act.state.get_movement_count()} / {b_act.MAX_MOVEMENTS}'
+        player_counter_text = f'Number of Moves Remaining for {player_type}: {b_act.state.get_num_of_movement()}'
 
         header_font = pygame.font.SysFont(gsc.COUNTER_FONT_NAME, gsc.COUNTER_FONT_SIZE)
         res = header_font.render(counter_text, True, gsc.COUNTER_COLOR)
@@ -226,7 +237,10 @@ class GameScreen(Screen, ABC):
 
         b_act.setup_state()
 
-        self.header = f'Player {b_act.state.get_active_player()}\'s turn'
+        if self.play_mode == 2:
+            self.header = f'AI is playing ...' if b_act.state.get_active_player() == ai.ai_player else f'Your Turn'
+        else:
+            self.header = f'Player {b_act.state.get_active_player()}\'s turn'
 
         self.reload_screen()
 
