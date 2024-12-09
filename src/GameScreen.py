@@ -1,3 +1,5 @@
+import time
+
 from src.Screen import Screen
 from src.Button import Button
 from src import ScreenManager as sm
@@ -213,6 +215,7 @@ class GameScreen(Screen, ABC):
 
         elif b_act.state.get_active_player()  == ai.ai_player % 2 + 1:
             self.human_action(event)
+            time.sleep(0.05)
 
     def setup(self):
         pygame.init()

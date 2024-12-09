@@ -1,5 +1,6 @@
 from src import BoardAction as b_act
 import numpy as np
+import random
 
 directions = [(-1,0), (1,0), (0,-1), (0,1)]
 ai_player = 1
@@ -43,9 +44,9 @@ def get_point(state):
     if cond == 0:
         return eval_point
     elif cond == ai_player:
-        return 100 + eval_point
+        return 1000 + eval_point
     elif cond == opponent_player:
-        return -100 + eval_point
+        return -1000 + eval_point
 
     return None
 
@@ -58,6 +59,8 @@ def play():
     best_score = float("-inf")
     move_source = (-1, -1)
     move_dest = (-1, -1)
+
+    random.shuffle(directions)
 
     for pos in positions:
         for dir in directions:
@@ -84,12 +87,12 @@ def minmax(state, is_max, alpha=float("-inf"), beta=float("inf"), depth=0):
     global count
     count += 1
 
-    if depth == 4:
-        return evaluation(state)
-
     point = get_point(state)
     if point is not None:
         return point
+
+    if depth == 4:
+        return evaluation(state)
 
     if is_max:
         best_score = float("-inf")
