@@ -159,7 +159,10 @@ class GameScreen(Screen, ABC):
 
         if cond != -1:
             if self.play_mode == 2:
-                self.header = f'AI WON' if cond == ai.ai_player else f'You WON'
+                if cond == ai.ai_player or cond == ai.ai_player % 2 + 1:
+                    self.header = f'AI WON' if cond == ai.ai_player else f'You WON'
+                else:
+                    self.header = f'DRAW'
             else:
                 self.header = f'Player {cond} WON' if cond != 0 else f'DRAW'
 
