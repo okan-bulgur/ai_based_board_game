@@ -7,8 +7,6 @@ MAX_MOVEMENTS = 50
 
 state = State(np.zeros((bc.BOARD_ROWS, bc.BOARD_COLS)), 1, 2, 0, (-1, -1))
 
-ai_play_mode = False
-
 def setup_state():
     state.set_board(np.zeros((bc.BOARD_ROWS, bc.BOARD_COLS)))
     state.set_active_player(1)
@@ -49,6 +47,9 @@ def check_pos_empty(pos):
     return state.get_board()[pos[0]][pos[1]] == 0
 
 def check_movement(state_cpy, source, dest):
+    if state_cpy.get_num_of_movement() == 0:
+        return False
+
     if dest[0] < 0 or dest[0] >= bc.BOARD_ROWS or dest[1] < 0 or dest[1] >= bc.BOARD_COLS:
         return False
 
@@ -169,16 +170,16 @@ def control_win_cond(state_cpy):
 
     return -1
 
-def move(state_cpy, player, source, dest):
+def move(state_cpy, player, source, dest, is_ai_play_mode):
 
     if player != state_cpy.get_active_player():
         return state_cpy
 
     if check_movement(state_cpy, source, dest):
-        state_cpy.update_board(dest[0], dest[1], state_cpy.get_value_of_board(source[0], source[1]) / 3)
-
-        if ai_play_mode:
+        if is_ai_play_mode:
             state_cpy.update_board(dest[0], dest[1], state_cpy.get_value_of_board(source[0], source[1]))
+        else:
+            state_cpy.update_board(dest[0], dest[1], state_cpy.get_value_of_board(source[0], source[1]) / 3)
 
         state_cpy.update_board(source[0], source[1], 0)
 

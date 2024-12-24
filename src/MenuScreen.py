@@ -54,7 +54,6 @@ class MenuScreen(Screen, ABC):
         self.button2.draw(self.screen)
 
     def setup(self):
-        pygame.init()
 
         self.screen = pygame.display.set_mode((self.sw, self.sh))
         self.screen.fill(SCREEN_COLOR)

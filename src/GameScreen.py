@@ -171,7 +171,7 @@ class GameScreen(Screen, ABC):
         self.selected_pos = None
 
     def move_obj(self, source, dest):
-        b_act.move(b_act.state, b_act.state.get_active_player(), source, dest)
+        b_act.move(b_act.state, b_act.state.get_active_player(), source, dest, False)
         if b_act.state.get_value_of_board(source[0], source[1]) == b_act.state.get_active_player() * 3:
             b_act.state.update_board(source[0], source[1], b_act.state.get_active_player())
 
@@ -222,18 +222,14 @@ class GameScreen(Screen, ABC):
             return
 
         if b_act.state.get_active_player() == ai.ai_player:
-            b_act.ai_play_mode = True
+            time.sleep(0.07)
             ai.play()
-            b_act.ai_play_mode = False
             self.update_header()
 
         elif b_act.state.get_active_player()  == ai.ai_player % 2 + 1:
             self.human_action(event)
-            time.sleep(0.05)
 
     def setup(self):
-        pygame.init()
-
         self.screen = pygame.display.set_mode((self.sw, self.sh))
         self.screen.fill(gsc.SCREEN_COLOR)
         pygame.display.set_caption(gsc.CAPTION)
