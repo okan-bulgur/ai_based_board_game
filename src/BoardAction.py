@@ -173,7 +173,7 @@ def control_win_cond(state_cpy):
 def move(state_cpy, player, source, dest, is_ai_play_mode):
 
     if player != state_cpy.get_active_player():
-        return state_cpy
+        return
 
     if check_movement(state_cpy, source, dest):
         if is_ai_play_mode:

@@ -9,6 +9,8 @@ directions = [(-1,0), (1,0), (0,-1), (0,1)]
 ai_player = 1
 opponent_player = ai_player % 2 + 1
 
+MAX_DEPTH = 4
+
 def calculate_piece_count_factor(state, aggressivity=1):
     p1_count = np.count_nonzero(state.get_board() == ai_player)
     p2_count = np.count_nonzero(state.get_board() == opponent_player)
@@ -48,10 +50,26 @@ def calculate_count_of_corner_factor(state):
 
     return player_1 - player_2
 
+def calculate_count_of_near_edges_factor(state):
+    player_1 = 0
+    player_2 = 0
+
+    for i in range(len(state.get_board())):
+        for j in range(len(state.get_board()[i])):
+            if state.get_value_of_board(i, j) == ai_player:
+                if i == 0 or i == len(state.get_board()) - 1 or j == 0 or j == len(state.get_board()[i]) - 1:
+                    player_1 += 1
+            elif state.get_value_of_board(i, j) == opponent_player:
+                if i == 0 or i == len(state.get_board()) - 1 or j == 0 or j == len(state.get_board()[i]) - 1:
+                    player_2 += 1
+
+    return player_1 - player_2
+
 def evaluation(state):
-    score = 20 * calculate_piece_count_factor(state, 2)
-    score += 10 * calculate_mobility_factor(state)
+    score = 50 * calculate_piece_count_factor(state, 1)
+    score -= 7 * calculate_count_of_near_edges_factor(state)
     score += 5 * calculate_count_of_center_factor(state)
+    score += 5 * calculate_mobility_factor(state)
     score += 3 * calculate_count_of_corner_factor(state)
 
     return score
@@ -63,9 +81,9 @@ def get_point(state):
     if cond == 0:
         return eval_point
     elif cond == ai_player:
-        return 10000 + eval_point
+        return float("inf") + eval_point
     elif cond == opponent_player:
-        return -10000 + eval_point
+        return float("-inf") + eval_point
 
     return None
 
@@ -75,28 +93,28 @@ def evaluate_move(args):
     if b_act.check_movement(state, pos, dest):
         state_copy = state.__copy__()
         b_act.move(state_copy, ai_player, pos, dest, True)
-        score = minimax(state_copy, True)
+        score = minimax_first(state_copy, True)
         return score, pos, dest
     return None, None, None
 
 def play():
-    start_time = time.time()
-    state_copy = b_act.state.__copy__()
-    positions = b_act.get_list_of_pos(state_copy.get_board(), ai_player)
-
     best_score = float("-inf")
     move_source = (-1, -1)
     move_dest = (-1, -1)
 
+    start_time = time.time()
+
     random.shuffle(directions)
+    state_copy = b_act.state.__copy__()
+    positions = b_act.get_list_of_pos(state_copy.get_board(), ai_player)
     tasks = [(pos, dir, state_copy) for pos in positions for dir in directions]
 
-    with multiprocessing.Pool(processes=4) as pool:
+    with multiprocessing.Pool(processes=8) as pool:
         results = pool.map(evaluate_move, tasks)
 
     for result in results:
         if result[0] is not None and result[0] > best_score:
-            print("result:", result)
+            print("Result:", result)
             best_score = result[0]
             move_source = result[1]
             move_dest = result[2]
@@ -105,12 +123,61 @@ def play():
         b_act.move(b_act.state, ai_player, move_source, move_dest, True)
         print("Time:", time.time() - start_time)
 
+
+def minimax_first(state, is_max, alpha=float("-inf"), beta=float("inf"), depth=0):
+    point = get_point(state)
+    if point is not None:
+        return point
+
+    if is_max:
+        best_score = float("-inf")
+        positions = b_act.get_list_of_pos(state.get_board(), ai_player)
+
+        for pos1 in positions:
+            for dir1 in directions:
+                dest1 = tuple(p + d for p, d in zip(pos1, dir1))
+
+                if b_act.check_movement(state, pos1, dest1):
+                    state_copy_1 = state.__copy__()
+                    b_act.move(state_copy_1, ai_player, pos1, dest1, True)
+
+                    score = minimax(state_copy_1, not is_max, alpha, beta, depth + 2)
+
+                    best_score = max(best_score, score)
+                    alpha = max(alpha, best_score)
+
+                    if alpha >= beta:
+                        return best_score
+        return best_score
+
+    else:
+        best_score = float("inf")
+        positions = b_act.get_list_of_pos(state.get_board(), opponent_player)
+
+        for pos1 in positions:
+            for dir1 in directions:
+                dest1 = tuple(p + d for p, d in zip(pos1, dir1))
+                if b_act.check_movement(state, pos1, dest1):
+
+                    state_copy_1 = state.__copy__()
+                    b_act.move(state_copy_1, opponent_player, pos1, dest1, True)
+
+                    score = minimax(state_copy_1, not is_max, alpha, beta, depth + 2)
+
+                    best_score = min(best_score, score)
+                    beta = min(beta, best_score)
+
+                    if alpha >= beta:
+                        return best_score
+
+        return best_score
+
 def minimax(state, is_max, alpha=float("-inf"), beta=float("inf"), depth=0):
     point = get_point(state)
     if point is not None:
         return point
 
-    if depth == 4:
+    if depth == MAX_DEPTH:
         return evaluation(state)
 
     if is_max:
